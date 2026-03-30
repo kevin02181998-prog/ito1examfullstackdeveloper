@@ -48,15 +48,24 @@ def dashboard_view(request):
     else:
         tasks = Task.objects.filter(assigned_to=request.user)
 
+    status_filter = request.GET.get('status', '')
+    if status_filter in ['pending', 'in_progress', 'done']:
+        filtered_tasks = tasks.filter(status=status_filter)
+    else:
+        filtered_tasks = tasks
+
     pending = tasks.filter(status='pending').count()
     in_progress = tasks.filter(status='in_progress').count()
     done = tasks.filter(status='done').count()
+    total = tasks.count()
 
     context = {
-        'tasks': tasks,
+        'tasks': filtered_tasks,
         'pending': pending,
         'in_progress': in_progress,
         'done': done,
+        'total': total,
+        'current_filter': status_filter,
     }
     return render(request, 'dashboard.html', context)
 
