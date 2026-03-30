@@ -12,9 +12,10 @@
             <a href="{% url 'dashboard' %}" class="text-xl font-bold">Task Manager</a>
             <div class="flex items-center gap-4">
                 {% if user.is_authenticated %}
-                    <span class="text-sm">Hello, <strong>{{ user.username }}</strong>
+                    <a href="{% url 'profile' %}" class="text-sm hover:underline">
+                        {{ user.get_full_name|default:user.username }}
                         {% if user.is_staff %}(Admin){% endif %}
-                    </span>
+                    </a>
                     <a href="{% url 'logout' %}" class="bg-white text-blue-600 px-3 py-1 rounded text-sm font-medium hover:bg-gray-100">Logout</a>
                 {% else %}
                     <a href="{% url 'login' %}" class="hover:underline text-sm">Login</a>
@@ -27,7 +28,7 @@
     <main class="max-w-6xl mx-auto px-4 py-6">
         {% if messages %}
             {% for message in messages %}
-                <div class="mb-4 p-3 rounded {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                <div class="alert-msg mb-4 p-3 rounded transition-all duration-500 {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -35,5 +36,14 @@
 
         {% block content %}{% endblock %}
     </main>
+
+    <script>
+        setTimeout(function() {
+            document.querySelectorAll('.alert-msg').forEach(function(el) {
+                el.style.opacity = '0';
+                setTimeout(function() { el.remove(); }, 500);
+            });
+        }, 3000);
+    </script>
 </body>
 </html>

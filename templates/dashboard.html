@@ -22,37 +22,62 @@
     </a>
 </div>
 
+<!-- Search Bar -->
+<div class="mb-6">
+    <form method="get" class="flex gap-2">
+        {% if current_filter %}
+            <input type="hidden" name="status" value="{{ current_filter }}">
+        {% endif %}
+        <div class="flex-1 relative">
+            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" name="q" value="{{ search_query }}" placeholder="Search tasks by title..."
+                class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white">
+        </div>
+        <button type="submit" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 text-sm font-medium transition">Search</button>
+        {% if search_query %}
+            <a href="{% url 'dashboard' %}{% if current_filter %}?status={{ current_filter }}{% endif %}" class="bg-gray-200 text-gray-600 px-4 py-2.5 rounded-lg hover:bg-gray-300 text-sm font-medium transition">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
 <!-- Stats Cards -->
 <div class="grid grid-cols-4 gap-4 mb-6">
-    <a href="{% url 'dashboard' %}" class="block bg-white border-l-4 border-gray-400 rounded-lg shadow p-4 hover:shadow-md transition {% if not current_filter %}ring-2 ring-gray-400{% endif %}">
+    <a href="{% url 'dashboard' %}{% if search_query %}?q={{ search_query }}{% endif %}" class="block bg-white border-l-4 border-gray-400 rounded-lg shadow p-4 hover:shadow-md transition {% if not current_filter %}ring-2 ring-gray-400{% endif %}">
         <div class="text-2xl font-bold text-gray-700">{{ total }}</div>
         <div class="text-sm text-gray-500">Total</div>
     </a>
-    <a href="?status=pending" class="block bg-white border-l-4 border-yellow-400 rounded-lg shadow p-4 hover:shadow-md transition {% if current_filter == 'pending' %}ring-2 ring-yellow-400{% endif %}">
+    <a href="?status=pending{% if search_query %}&q={{ search_query }}{% endif %}" class="block bg-white border-l-4 border-yellow-400 rounded-lg shadow p-4 hover:shadow-md transition {% if current_filter == 'pending' %}ring-2 ring-yellow-400{% endif %}">
         <div class="text-2xl font-bold text-yellow-600">{{ pending }}</div>
         <div class="text-sm text-yellow-700">Pending</div>
     </a>
-    <a href="?status=in_progress" class="block bg-white border-l-4 border-blue-400 rounded-lg shadow p-4 hover:shadow-md transition {% if current_filter == 'in_progress' %}ring-2 ring-blue-400{% endif %}">
+    <a href="?status=in_progress{% if search_query %}&q={{ search_query }}{% endif %}" class="block bg-white border-l-4 border-blue-400 rounded-lg shadow p-4 hover:shadow-md transition {% if current_filter == 'in_progress' %}ring-2 ring-blue-400{% endif %}">
         <div class="text-2xl font-bold text-blue-600">{{ in_progress }}</div>
         <div class="text-sm text-blue-700">In Progress</div>
     </a>
-    <a href="?status=done" class="block bg-white border-l-4 border-green-400 rounded-lg shadow p-4 hover:shadow-md transition {% if current_filter == 'done' %}ring-2 ring-green-400{% endif %}">
+    <a href="?status=done{% if search_query %}&q={{ search_query }}{% endif %}" class="block bg-white border-l-4 border-green-400 rounded-lg shadow p-4 hover:shadow-md transition {% if current_filter == 'done' %}ring-2 ring-green-400{% endif %}">
         <div class="text-2xl font-bold text-green-600">{{ done }}</div>
         <div class="text-sm text-green-700">Done</div>
     </a>
 </div>
 
-<!-- Active Filter Label -->
-{% if current_filter %}
-<div class="mb-4 flex items-center gap-2">
-    <span class="text-sm text-gray-500">Filtering by:</span>
-    <span class="px-2 py-1 rounded-full text-xs font-medium
-        {% if current_filter == 'pending' %}bg-yellow-100 text-yellow-800
-        {% elif current_filter == 'in_progress' %}bg-blue-100 text-blue-800
-        {% else %}bg-green-100 text-green-800{% endif %}">
-        {% if current_filter == 'pending' %}Pending{% elif current_filter == 'in_progress' %}In Progress{% else %}Done{% endif %}
-    </span>
-    <a href="{% url 'dashboard' %}" class="text-xs text-red-500 hover:underline">Clear</a>
+<!-- Active Filters -->
+{% if current_filter or search_query %}
+<div class="mb-4 flex items-center gap-2 flex-wrap">
+    <span class="text-sm text-gray-500">Active filters:</span>
+    {% if search_query %}
+        <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">"{{ search_query }}"</span>
+    {% endif %}
+    {% if current_filter %}
+        <span class="px-2 py-1 rounded-full text-xs font-medium
+            {% if current_filter == 'pending' %}bg-yellow-100 text-yellow-800
+            {% elif current_filter == 'in_progress' %}bg-blue-100 text-blue-800
+            {% else %}bg-green-100 text-green-800{% endif %}">
+            {% if current_filter == 'pending' %}Pending{% elif current_filter == 'in_progress' %}In Progress{% else %}Done{% endif %}
+        </span>
+    {% endif %}
+    <a href="{% url 'dashboard' %}" class="text-xs text-red-500 hover:underline">Clear all</a>
 </div>
 {% endif %}
 
@@ -64,12 +89,13 @@
             <tr>
                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">#</th>
                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Title</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Priority</th>
                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Due Date</th>
                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Assigned By</th>
                 {% if user.is_staff %}
                     <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Assigned To</th>
                 {% endif %}
-                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Created</th>
                 <th class="px-4 py-3 text-center text-sm font-medium text-gray-600">Actions</th>
             </tr>
         </thead>
@@ -85,17 +111,32 @@
                 </td>
                 <td class="px-4 py-3">
                     <span class="px-2 py-1 rounded-full text-xs font-medium
+                        {% if task.priority == 'high' %}bg-red-100 text-red-800
+                        {% elif task.priority == 'medium' %}bg-orange-100 text-orange-800
+                        {% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {{ task.get_priority_display }}
+                    </span>
+                </td>
+                <td class="px-4 py-3">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium
                         {% if task.status == 'pending' %}bg-yellow-100 text-yellow-800
                         {% elif task.status == 'in_progress' %}bg-blue-100 text-blue-800
                         {% else %}bg-green-100 text-green-800{% endif %}">
                         {{ task.get_status_display }}
                     </span>
                 </td>
+                <td class="px-4 py-3 text-sm {% if task.is_overdue %}text-red-600 font-medium{% else %}text-gray-500{% endif %}">
+                    {% if task.due_date %}
+                        {{ task.due_date|date:"M d, Y" }}
+                        {% if task.is_overdue %}(Overdue){% endif %}
+                    {% else %}
+                        <span class="text-gray-300">—</span>
+                    {% endif %}
+                </td>
                 <td class="px-4 py-3 text-sm text-gray-600">{{ task.created_by.last_name|default:task.created_by.username }}</td>
                 {% if user.is_staff %}
                     <td class="px-4 py-3 text-sm text-gray-600">{{ task.assigned_to.username }}</td>
                 {% endif %}
-                <td class="px-4 py-3 text-sm text-gray-500">{{ task.created_at|date:"M d, Y" }}</td>
                 <td class="px-4 py-3 text-center">
                     <div class="flex gap-2 justify-center">
                         <a href="{% url 'update_task' task.pk %}"
@@ -111,9 +152,10 @@
 </div>
 {% else %}
 <div class="bg-white rounded-lg shadow p-10 text-center">
-    <div class="text-gray-400 text-4xl mb-3">📋</div>
     <p class="text-gray-500 font-medium">No tasks found.</p>
-    <p class="text-gray-400 text-sm mt-1">Click "+ New Task" to create one.</p>
+    <p class="text-gray-400 text-sm mt-1">
+        {% if search_query %}Try a different search term.{% else %}Click "+ New Task" to create one.{% endif %}
+    </p>
 </div>
 {% endif %}
 {% endblock %}

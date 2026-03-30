@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from .models import Task
-from .forms import RegisterForm, TaskForm, TaskStatusForm, AdminTaskForm
+from .forms import (
+    RegisterForm, TaskForm, TaskStatusForm,
+    AdminTaskForm, ProfileForm, ChangePasswordForm,
+)
 
 
 def register_view(request):
@@ -48,16 +51,28 @@ def dashboard_view(request):
     else:
         tasks = Task.objects.filter(assigned_to=request.user)
 
+    # Search
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        tasks = tasks.filter(title__icontains=search_query)
+
+    # Status filter
     status_filter = request.GET.get('status', '')
     if status_filter in ['pending', 'in_progress', 'done']:
         filtered_tasks = tasks.filter(status=status_filter)
     else:
         filtered_tasks = tasks
 
-    pending = tasks.filter(status='pending').count()
-    in_progress = tasks.filter(status='in_progress').count()
-    done = tasks.filter(status='done').count()
-    total = tasks.count()
+    # Counts (based on pre-search set for accurate totals)
+    if request.user.is_staff:
+        all_tasks = Task.objects.all()
+    else:
+        all_tasks = Task.objects.filter(assigned_to=request.user)
+
+    pending = all_tasks.filter(status='pending').count()
+    in_progress = all_tasks.filter(status='in_progress').count()
+    done = all_tasks.filter(status='done').count()
+    total = all_tasks.count()
 
     context = {
         'tasks': filtered_tasks,
@@ -66,6 +81,7 @@ def dashboard_view(request):
         'done': done,
         'total': total,
         'current_filter': status_filter,
+        'search_query': search_query,
     }
     return render(request, 'dashboard.html', context)
 
@@ -136,3 +152,36 @@ def delete_task_view(request, pk):
         return redirect('dashboard')
 
     return render(request, 'delete_task.html', {'task': task})
+
+
+@login_required
+def profile_view(request):
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated!')
+            return redirect('profile')
+    else:
+        form = ProfileForm(instance=request.user)
+
+    return render(request, 'profile.html', {'form': form})
+
+
+@login_required
+def change_password_view(request):
+    if request.method == 'POST':
+        form = ChangePasswordForm(request.POST)
+        if form.is_valid():
+            if not request.user.check_password(form.cleaned_data['current_password']):
+                messages.error(request, 'Current password is incorrect.')
+            else:
+                request.user.set_password(form.cleaned_data['new_password'])
+                request.user.save()
+                update_session_auth_hash(request, request.user)
+                messages.success(request, 'Password changed successfully!')
+                return redirect('profile')
+    else:
+        form = ChangePasswordForm()
+
+    return render(request, 'change_password.html', {'form': form})
