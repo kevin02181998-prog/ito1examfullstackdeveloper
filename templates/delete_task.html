@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Delete Task - Task Manager{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto mt-10">
+    <div class="bg-white rounded-lg shadow p-6 text-center">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">Delete Task</h2>
+        <p class="text-gray-600 mb-6">Are you sure you want to delete "<strong>{{ task.title }}</strong>"?</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex gap-3 justify-center">
+                <button type="submit"
+                    class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 font-medium">
+                    Yes, Delete
+                </button>
+                <a href="{% url 'dashboard' %}"
+                    class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 font-medium">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
