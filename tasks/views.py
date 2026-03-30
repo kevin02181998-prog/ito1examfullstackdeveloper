@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib import messages
 from .models import Task
 from .forms import RegisterForm, TaskForm, TaskStatusForm, AdminTaskForm
@@ -17,6 +18,27 @@ def register_view(request):
     else:
         form = RegisterForm()
     return render(request, 'register.html', {'form': form})
+
+
+def reset_password_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if new_password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+        else:
+            try:
+                user = User.objects.get(username=username)
+                user.set_password(new_password)
+                user.save()
+                messages.success(request, 'Password reset successful! You can now login.')
+                return redirect('login')
+            except User.DoesNotExist:
+                messages.error(request, 'Username not found.')
+
+    return render(request, 'reset_password.html')
 
 
 @login_required
